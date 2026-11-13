@@ -97,7 +97,7 @@ adds one concept and ends with an experiment.
 - Parallel tool calls
 - MCP client support
 - A plan-then-execute mode
-- A terminal UI
+- A terminal UI (not built: mostly UI work rather than harness ideas)
 
 ## Pacing
 
