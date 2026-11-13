@@ -110,17 +110,17 @@ class Printer:
 class Agent:
     def __init__(self, provider, mode="ask", ask_user=None):
         self.provider = provider
-        self.system_prompt = system_prompt()  # NEW: built for the current folder
-        # NEW: who answers permission questions. By default, you (by typing).
+        self.system_prompt = system_prompt()  # built for the current folder (stage 8)
+        # Who answers permission questions. By default, you, by typing (stage 8).
         if ask_user:
             self.ask_user = ask_user
-        # NEW: running totals, for evals.
+        # Running totals, for evals (stage 8).
         self.stats = {"requests": 0, "tool_calls": 0, "input_tokens": 0, "output_tokens": 0}
         self.history = []   # in the internal format described in providers.py
         self.think = None
         self.mode = mode     # see permissions.MODES (stage 6)
         self.always = set()  # what the user said "always" to (stage 6)
-        self.last_input_tokens = None  # NEW: the provider's own count
+        self.last_input_tokens = None  # the provider's own count (stage 7)
 
     def ask_user(self, name, arguments, reason):
         """Show what the action would do and let the user decide (stage 6)."""
@@ -159,11 +159,11 @@ class Agent:
         ]
 
     def context_size(self):
-        """NEW: estimated tokens for the next request."""
+        """Estimated tokens for the next request (stage 7)."""
         return sum(context.breakdown(self.system_prompt, self.tool_definitions(), self.history).values())
 
     def manage_context(self, may_summarize):
-        """NEW: make room in the context window if it is getting full.
+        """Make room in the context window if it is getting full (stage 7).
         Summarizing only happens between turns, never in the middle of one."""
         window = self.provider.context_tokens
         if self.context_size() > window * context.TRIM_AT:
@@ -183,7 +183,7 @@ class Agent:
             print(f"[context: nothing to summarize; the last {context.KEEP_TURNS} turns are always kept]")
 
     def show_context(self):
-        """NEW: what fills the context window, by part."""
+        """What fills the context window, by part (stage 7)."""
         window = self.provider.context_tokens
         parts = context.breakdown(self.system_prompt, self.tool_definitions(), self.history)
         total = sum(parts.values())

@@ -1,0 +1,3 @@
+{
+  "prompt": "average() in stats.py crashes on an empty list. Make it return 0 for an empty list instead."
+}

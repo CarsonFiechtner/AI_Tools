@@ -150,3 +150,23 @@ What surprised me at each stage. A sentence or two per entry is plenty.
     harness give up straight away, while a 503 is retried?
   - Count the lines in `stage9/` that are about the agent loop versus
     everything else. Where did most of the code go?
+
+## Stage 10: electives
+
+- See what changed: `git diff --no-index stage9 stage10`, then read
+  `stage10/mcp_client.py` and `stage10/experiment/mcp_server_example.py`.
+- Run from inside a copy of `stage10/experiment/` (it has an `mcp.json`).
+- Experiments:
+  - Subagents: ask "Use a helper to find out what the tests check, then
+    tell me." Compare `/context` with doing the same without a helper.
+    What does the main conversation save, and what does it lose?
+  - Parallel: ask it to read three files at once. Does the model ask for
+    them in one reply? (Not every model does.)
+  - Plan mode: `/plan on`, "fix both bugs in calc.py". Read the plan, then
+    `/plan off` and "go ahead". Is the result better than without a plan?
+  - MCP: `/tools` lists the example server's tools. Ask "what time is it?"
+    Then read `logs/mcp-example.log` to see the messages from the server's
+    side. Add a tool of your own to `mcp_server_example.py`.
+  - Real MCP servers: many exist (filesystem, git, web fetch, databases).
+    Most start with a command like `npx ...` or `uvx ...`; add one to
+    `mcp.json` and see whether the client copes.
