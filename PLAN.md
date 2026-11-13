@@ -7,8 +7,9 @@ adds one concept and ends with an experiment.
 
 - **Language: Python.** Standard library only to begin with, so every HTTP
   request is visible.
-- **Provider: Gemini first**, over its raw REST API. A second provider is added
-  in stage 5 behind a small interface.
+- **Provider: a local model first** (qwen3.5:9b through Ollama), over its raw
+  HTTP API. Gemini was the first choice but kept returning 503s; its scripts
+  are kept as `*_gemini.py`. Stage 5 puts both behind one small interface.
 - **No agent frameworks.** The framework is the thing being learned.
 
 ## Ground rules

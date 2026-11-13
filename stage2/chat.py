@@ -3,12 +3,16 @@
 Usage:
     python stage2/chat.py
 
-Set GEMINI_API_KEY first, as in stage 1. Set GEMINI_MODEL to try another model.
+Ollama must be running, as in stage 1. Set OLLAMA_MODEL to try another model.
 
 Commands you can type instead of a message:
     /history   show the conversation exactly as it is sent to the model
     /undo      remove your last message and the model's reply to it
+    /think on  let the model reason before answering (for models that think)
+    /think off make it answer straight away
     /quit      leave (Ctrl-C or Ctrl-Z/Ctrl-D also work)
+
+chat_gemini.py is the same program for Google's Gemini API.
 """
 
 import json
@@ -18,121 +22,108 @@ import time
 import urllib.error
 import urllib.request
 
-API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+OLLAMA_URL = "http://localhost:11434"
+MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.5:9b")
 LOG_DIR = "logs"
 
-# The system prompt is sent with every request, separately from the
-# conversation. Try changing it and see how the replies change.
+# The system prompt is sent with every request, before the conversation.
+# Try changing it and see how the replies change.
 SYSTEM_PROMPT = "You are a helpful assistant. Keep answers short."
 
 
-def open_with_retries(request):
-    """Open the HTTP request, retrying temporary failures (same idea as stage 1)."""
-    attempts = 4
-    for attempt in range(1, attempts + 1):
-        try:
-            return urllib.request.urlopen(request, timeout=60)
-        except urllib.error.HTTPError as error:
-            details = error.read().decode()
-            if error.code not in (429, 503) or attempt == attempts:
-                raise RuntimeError(f"HTTP {error.code} from the API:\n{details}")
-            problem = f"HTTP {error.code}"
-        except TimeoutError:
-            if attempt == attempts:
-                raise RuntimeError("The API did not answer in time. Try again later.")
-            problem = "no answer in time"
-
-        wait = 5 * 2 ** (attempt - 1)
-        print(f"[{problem}; retrying in {wait}s]", file=sys.stderr)
-        time.sleep(wait)
+def open_request(request):
+    """Open the HTTP request, turning failures into readable messages."""
+    try:
+        # A generous timeout, because loading the model can take a while.
+        return urllib.request.urlopen(request, timeout=300)
+    except urllib.error.HTTPError as error:
+        raise RuntimeError(f"HTTP {error.code} from Ollama: {error.read().decode()}")
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"could not reach Ollama at {OLLAMA_URL} ({error.reason}). Is it running?")
 
 
-def stream_reply(history):
+def stream_reply(history, think):
     """Send the whole conversation, print the reply as it arrives, return it.
 
     Note that `history` holds every message so far. The model remembers
     nothing between requests: this list is its entire memory.
     """
-    body = {
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": history,
-    }
-    # streamGenerateContent with alt=sse sends the reply in pieces using
-    # "server-sent events": lines of the form  data: {...json...}
-    url = f"{API_ROOT}/models/{MODEL}:streamGenerateContent?alt=sse"
+    # The system prompt goes first, as a message with the role "system".
+    # (Gemini takes it in a separate field instead: a provider difference.)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+    body = {"model": MODEL, "messages": messages, "stream": True}
+    if think is not None:
+        body["think"] = think
+
     request = urllib.request.Request(
-        url,
+        f"{OLLAMA_URL}/api/chat",
         method="POST",
         data=json.dumps(body).encode(),
-        headers={
-            "x-goog-api-key": os.environ["GEMINI_API_KEY"],
-            "Content-Type": "application/json",
-        },
+        headers={"Content-Type": "application/json"},
     )
 
-    chunks = []        # every event, kept for the log
-    text = ""          # the reply, assembled from the pieces
-    signature = None   # see the note on thoughtSignature below
-    usage = {}
-    finish_reason = None
+    chunks = []       # every piece, kept for the log
+    text = ""         # the reply, assembled from the pieces
+    thought = False   # whether any thinking was shown
+    final = {}        # the last piece, which carries the statistics
 
-    with open_with_retries(request) as response:
+    with open_request(request) as response:
+        # Ollama streams one JSON object per line ("newline-delimited JSON").
         for raw_line in response:
             line = raw_line.decode("utf-8").strip()
-            if not line.startswith("data:"):
-                continue  # blank lines separate events
-            chunk = json.loads(line[len("data:"):])
+            if not line:
+                continue
+            chunk = json.loads(line)
             chunks.append(chunk)
+            if "error" in chunk:
+                raise RuntimeError(chunk["error"])
 
-            candidate = chunk.get("candidates", [{}])[0]
-            for part in candidate.get("content", {}).get("parts", []):
-                if part.get("thought"):
-                    continue  # a summary of the model's reasoning, not the answer
-                if "text" in part:
-                    print(part["text"], end="", flush=True)
-                    text += part["text"]
-                # Models that "think" before answering return an encrypted
-                # record of that thinking. Sending it back with the history
-                # lets the model pick up its earlier reasoning.
-                if "thoughtSignature" in part:
-                    signature = part["thoughtSignature"]
-
-            finish_reason = candidate.get("finishReason", finish_reason)
-            usage = chunk.get("usageMetadata", usage)
+            message = chunk.get("message", {})
+            # Thinking models first write out their reasoning, then the answer.
+            if message.get("thinking"):
+                if not thought:
+                    print("[thinking] ", end="")
+                    thought = True
+                print(message["thinking"], end="", flush=True)
+            if message.get("content"):
+                if thought and not text:
+                    print("\n[answer] ", end="")
+                print(message["content"], end="", flush=True)
+                text += message["content"]
+            if chunk.get("done"):
+                final = chunk
     print()
 
     save_log(body, chunks)
 
-    # Show what this turn cost. Watch the input count grow every turn:
-    # the whole history is sent again each time.
+    # Show what this turn cost. Ollama may reuse work from earlier turns (a
+    # cache), so "in" may count only the tokens it had to read this time.
+    seconds = final.get("eval_duration", 0) / 1e9
+    speed = final.get("eval_count", 0) / seconds if seconds else 0
     print(
-        f"[{usage.get('promptTokenCount', '?')} tokens in, "
-        f"{usage.get('candidatesTokenCount', '?')} out, "
-        f"{usage.get('thoughtsTokenCount', 0)} thinking; "
-        f"finish: {finish_reason}]",
+        f"[{final.get('prompt_eval_count', '?')} tokens in, "
+        f"{final.get('eval_count', '?')} out, {speed:.0f} tokens/s; "
+        f"finish: {final.get('done_reason')}]",
         file=sys.stderr,
     )
 
-    reply_part = {"text": text}
-    if signature:
-        reply_part["thoughtSignature"] = signature
-    return {"role": "model", "parts": [reply_part]}
+    # Only the answer goes into the history; the thinking is dropped, as most
+    # harnesses do. The model will not see its earlier reasoning next turn.
+    return {"role": "assistant", "content": text}
 
 
 def save_log(request_body, chunks):
     os.makedirs(LOG_DIR, exist_ok=True)
     path = os.path.join(LOG_DIR, f"chat-{time.strftime('%Y%m%d-%H%M%S')}.json")
     with open(path, "w", encoding="utf-8") as f:
-        json.dump({"request": request_body, "chunks": chunks}, f, indent=2)
+        json.dump({"request": request_body, "chunks": chunks}, f, indent=2, ensure_ascii=False)
 
 
 def main():
-    if not os.environ.get("GEMINI_API_KEY"):
-        sys.exit("Set the GEMINI_API_KEY environment variable first.")
     print(f"Chatting with {MODEL}. Type /help for commands.")
 
     history = []
+    think = None  # None means "the model's default"
     while True:
         try:
             message = input("\nyou> ").strip()
@@ -156,11 +147,15 @@ def main():
             history = history[:-2]
             print(f"[removed last exchange; {len(history)} messages left]")
             continue
+        if message in ("/think on", "/think off"):
+            think = message == "/think on"
+            print(f"[thinking {'on' if think else 'off'}]")
+            continue
 
-        history.append({"role": "user", "parts": [{"text": message}]})
+        history.append({"role": "user", "content": message})
         print("model> ", end="", flush=True)
         try:
-            history.append(stream_reply(history))
+            history.append(stream_reply(history, think))
         except (RuntimeError, TimeoutError, KeyboardInterrupt) as error:
             # The turn failed or you pressed Ctrl-C, so drop your message
             # from the history so it is not sent next time without a reply.
