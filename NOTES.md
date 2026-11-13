@@ -114,3 +114,24 @@ What surprised me at each stage. A sentence or two per entry is plenty.
     and send another message. What happens to it, and why?
   - Look at `/history` after a summary. Whose words is the summary in?
     (Compare stage 2's fake-history question.)
+
+## Stage 8: evals
+
+- Read `stage8/evals.py` from the top, then look at one task folder in
+  `stage8/evals/` (files, task.json, check.py).
+- Run from the repo folder: `python stage8/evals.py`. With a local model
+  this takes a while: 7 tasks x 3 runs. Try `--tasks fix_add,find_value`
+  first.
+- Experiments:
+  - Baseline: run everything with `--label baseline`. Which tasks fail?
+    Read a failing transcript in `eval-results/` to see why.
+  - Thinking: `--think off --label no-think` vs `--think on --label think`.
+    Does pass rate change? Speed? Tokens?
+  - System prompt: change `system_prompt()` in `stage8/agent.py` (e.g.
+    delete the "Read a file before changing it" line) and run again.
+  - Tool design: set `EDIT_STYLE = "rewrite"` in `stage8/tools.py` and run
+    again. This is the stage 4 experiment, now with numbers.
+  - Add a task of your own: a folder with files/, task.json and check.py.
+  - Noise: run the same setup twice. How much does the pass rate move with
+    no change at all? That's how big a difference has to be to mean
+    anything.

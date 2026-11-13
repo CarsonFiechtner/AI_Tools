@@ -1,0 +1,3 @@
+{
+  "prompt": "Add a function is_palindrome(text) to text_utils.py. It should return True if the text reads the same backwards, ignoring upper/lower case and spaces."
+}

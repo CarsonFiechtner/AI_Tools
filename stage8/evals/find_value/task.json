@@ -1,0 +1,6 @@
+{
+  "prompt": "What is the value of MAX_RETRIES in this project? Answer with just the number.",
+  "answer_contains": [
+    "7"
+  ]
+}
