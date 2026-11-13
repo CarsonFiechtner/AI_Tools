@@ -97,3 +97,20 @@ What surprised me at each stage. A sentence or two per entry is plenty.
   - Think about it: what could a command you allow do that these rules
     can't see? (Hint: `python something.py` can run any code.) What would a
     container add?
+
+## Stage 7: context management
+
+- See what changed: `git diff --no-index stage6 stage7`, then read the top
+  of `stage7/context.py`.
+- Experiments:
+  - Run `/context` after a few turns. What takes up the most room? Compare
+    the estimate with the provider's own count.
+  - Make the window small to see compaction happen sooner. PowerShell:
+    `$env:OLLAMA_CONTEXT_TOKENS = "4096"`. Ask it to read `big.txt`, then
+    other files, and watch for the "[context: ...]" lines.
+  - After a summary, ask about a detail from early on (a line number, an
+    exact value). What did the summary lose?
+  - Caching: note the "cached" number in the usage line, run `/compact`,
+    and send another message. What happens to it, and why?
+  - Look at `/history` after a summary. Whose words is the summary in?
+    (Compare stage 2's fake-history question.)
