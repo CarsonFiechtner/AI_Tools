@@ -45,3 +45,19 @@ What surprised me at each stage. A sentence or two per entry is plenty.
     "only use this as a last resort") and repeat an experiment.
   - Open a log in `logs/` and find the tool definition in the request. The
     model sees it as text, like everything else.
+
+## Stage 4: a real toolset
+
+- Try it on a scratch folder first, e.g. a copy of `stage4/experiment/`:
+  `python ../stage4/agent.py` from inside the copy.
+- Experiments:
+  - Ask it to fix the bug in `calc.py` and check its work by running the
+    tests. How many tool calls does it take? Does it read before editing?
+  - Edit style: set `EDIT_STYLE = "rewrite"` at the top of `agent.py` and
+    give it the same task. Compare how often the edit goes wrong. (Try it a
+    few times each: one run proves little.)
+  - Deny a command (answer `n`). What does the model do next?
+  - Ask it to read `big.txt`. Does it follow the "call read_file again"
+    hint, or answer from the first part only?
+  - Find a tool error in the output (e.g. old_text not found). Did the
+    model recover? The wording of error messages is part of tool design.
