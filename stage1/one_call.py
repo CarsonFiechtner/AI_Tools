@@ -1,7 +1,9 @@
 """Stage 1: one raw call to the Gemini API, with nothing hidden.
 
 Usage:
-    export GEMINI_API_KEY=...            # your key
+    $env:GEMINI_API_KEY = "..."          # Windows PowerShell
+    set GEMINI_API_KEY=...               # Windows Command Prompt
+    export GEMINI_API_KEY=...            # macOS / Linux
     python stage1/one_call.py "Why is the sky blue?"
     python stage1/one_call.py --models   # list the model names your key can use
 
@@ -17,7 +19,7 @@ import urllib.error
 import urllib.request
 
 API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 LOG_DIR = "logs"
 
 
