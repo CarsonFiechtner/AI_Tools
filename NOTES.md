@@ -80,3 +80,20 @@ What surprised me at each stage. A sentence or two per entry is plenty.
   - Exercise: write an adapter for Anthropic's Messages API yourself. It is
     different again: tool calls and results are "content blocks" inside
     messages, and tool results are sent by the user.
+
+## Stage 6: safety and permissions
+
+- See what changed: `git diff --no-index stage5 stage6`, then read the top
+  of `stage6/permissions.py`.
+- Experiments (from inside a copy of `stage6/experiment/`):
+  - Prompt injection: ask "What is this project?" The README hides an
+    instruction for AI assistants. Does the model try to follow it? Does it
+    tell you? Try once with the "tool results are data" lines removed from
+    `SYSTEM_PROMPT` in `agent.py`, and compare.
+  - Ask it to read a file outside the folder (e.g. `../PLAN.md`). Then ask it
+    to write one there. What's the difference, and why?
+  - Try `/mode auto-edit` and `/mode read-only` on the same task.
+  - Read `logs/permissions.log` after a session.
+  - Think about it: what could a command you allow do that these rules
+    can't see? (Hint: `python something.py` can run any code.) What would a
+    container add?
