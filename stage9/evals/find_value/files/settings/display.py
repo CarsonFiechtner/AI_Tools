@@ -1,0 +1,2 @@
+WIDTH = 80
+MAX_ROWS = 50

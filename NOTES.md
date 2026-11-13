@@ -135,3 +135,18 @@ What surprised me at each stage. A sentence or two per entry is plenty.
   - Noise: run the same setup twice. How much does the pass rate move with
     no change at all? That's how big a difference has to be to mean
     anything.
+
+## Stage 9: robustness and usability
+
+- See what changed: `git diff --no-index stage8 stage9`.
+- Experiments (from inside a copy of `stage9/experiment/`):
+  - Project instructions: the folder has an `AGENTS.md`. Does the model
+    follow it (the sign-off line, running the tests)? Edit it and restart.
+  - Interrupt: start a task with several steps and press Ctrl-C halfway.
+    Check `/history`, then type "continue".
+  - Sessions: quit, then run with `--resume`. Try `/sessions`. Open the
+    JSON file in `sessions/`: that is the whole state of the conversation.
+  - Retries: stop Ollama mid-session and send a message. Why does the
+    harness give up straight away, while a 503 is retried?
+  - Count the lines in `stage9/` that are about the agent loop versus
+    everything else. Where did most of the code go?
