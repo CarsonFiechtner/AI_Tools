@@ -17,6 +17,8 @@ adds one concept and ends with an experiment.
 - Log every raw request and response to `logs/`. Reading transcripts is where
   most of the learning happens.
 - Keep `NOTES.md`: for each stage, write down what surprised you.
+- Before moving on from a stage, review its key learning points and answer a
+  few check questions, using what actually happened in that stage's runs.
 - One directory per stage (`stage1/`, `stage2/`, ...), each copied from the
   last, so earlier versions stay readable.
 
