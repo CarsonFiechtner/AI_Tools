@@ -61,3 +61,22 @@ What surprised me at each stage. A sentence or two per entry is plenty.
     hint, or answer from the first part only?
   - Find a tool error in the output (e.g. old_text not found). Did the
     model recover? The wording of error messages is part of tool design.
+
+## Stage 5: a second model provider
+
+- See what changed: `git diff --no-index stage4/agent.py stage5/agent.py`
+  and read `stage5/providers.py` from the top: its docstring describes the
+  harness's own message format.
+- Experiments:
+  - Same model, two APIs: run with `--provider openai --model qwen3.5:9b`
+    and `OPENAI_BASE_URL=http://localhost:11434/v1`. Compare a log from
+    each in `logs/`. What differs in the request? (Hint: the context size.)
+  - Switch mid-conversation: ask a question, then `/use gemini` (if your key
+    works by then) and ask a follow-up. Does the new model pick up the
+    conversation? Look at `/history`: it is the same list either way.
+  - Find three differences between providers in `providers.py`: where the
+    system prompt goes, how tool results are matched to calls, and whether
+    tool arguments are a dict or JSON text.
+  - Exercise: write an adapter for Anthropic's Messages API yourself. It is
+    different again: tool calls and results are "content blocks" inside
+    messages, and tool results are sent by the user.
