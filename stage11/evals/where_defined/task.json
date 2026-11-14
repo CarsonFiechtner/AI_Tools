@@ -1,0 +1,6 @@
+{
+  "prompt": "Which file defines the function parse_date? Answer with just the file's path.",
+  "answer_contains": [
+    "dates.py"
+  ]
+}

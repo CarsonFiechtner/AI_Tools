@@ -1,0 +1,9 @@
+{
+  "prompt": "Rename the function calc_total to compute_total everywhere in this project.",
+  "grade": {
+    "all_renamed": {
+      "type": "noul",
+      "instructions": "Was every use of calc_total renamed to compute_total, including imports, calls, comments and docs?"
+    }
+  }
+}

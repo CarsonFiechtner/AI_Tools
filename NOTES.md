@@ -170,3 +170,26 @@ What surprised me at each stage. A sentence or two per entry is plenty.
   - Real MCP servers: many exist (filesystem, git, web fetch, databases).
     Most start with a command like `npx ...` or `uvx ...`; add one to
     `mcp.json` and see whether the client copes.
+
+## Stage 11: grading evals with the Decisions API
+
+- See what changed: `git diff --no-index stage10 stage11`, then read
+  `stage11/grader.py`.
+- Run `python stage11/evals.py --grade` (needs `GEMINI_API_KEY`). Each run is
+  also judged by `gemini-decision-1`, using the task, the diff and the final
+  message. The grade is shown next to the check and never replaces it.
+- The Decisions API writes no text. It answers closed questions (yes/no,
+  pick one, score on a scale) in a single pass and returns probabilities.
+  You pay only for input tokens, so send the diff rather than the whole
+  transcript. The free tier allows roughly 50k input tokens a minute.
+- Experiments:
+  - Agreement: where do the check and the grader disagree? Read those
+    transcripts. Is the check too lenient, or is the grader wrong?
+  - Sabotage: change a task so that the check passes but the result is
+    ugly, or so that the agent's final message lies. Does the grader notice?
+  - Wording: rephrase a question in `grader.QUESTIONS`. How much do the
+    probabilities move? A grader is a model too, and it needs evals of its own.
+  - Add a question for one task in its `task.json` under `"grade"` (see
+    `evals/rename/task.json`).
+  - Compare two system prompts on quality, not just pass rate. A difference
+    the checks can't see may show up here.

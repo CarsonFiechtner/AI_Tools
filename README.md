@@ -21,6 +21,7 @@ New code is marked `NEW` in comments.
 | 8 | `stage8/` | Evals: measuring the agent | `python stage8/evals.py` |
 | 9 | `stage9/` | Robustness: retries, interrupts, sessions, AGENTS.md | see below |
 | 10 | `stage10/` | Subagents, parallel tools, plan mode, MCP | see below |
+| 11 | `stage11/` | A grader model for evals (Gemini Decisions API) | `python stage11/evals.py --grade` |
 
 From stage 4 on, the agent can change files. Run it on a copy of the
 stage's `experiment` folder rather than on this repository. In PowerShell:
